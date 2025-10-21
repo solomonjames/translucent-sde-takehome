@@ -1,0 +1,13 @@
+# Standard Python libraries only - no external dependencies required
+# This keeps the take-home simple and focused on core programming skills
+
+# The baseline implementation uses only Python standard library:
+# - json (for data serialization)
+# - re (for regex pattern matching)
+# - collections (for efficient data structures)
+# - datetime (for timestamp handling)
+# - statistics (for statistical calculations)
+# - argparse (for command-line interface)
+
+# Candidates may choose to use additional libraries, but the baseline
+# should work with just the standard library to ensure compatibility.
