@@ -17,6 +17,9 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import argparse
 import json
 
+from collections import defaultdict
+from enum import Enum
+
 from src.monitors import PipelineMonitor
 
 
@@ -31,8 +34,22 @@ def main():
 
     args = parser.parse_args()
 
+    # Basic input validation
+    if args.data_file is None or not os.path.isfile(args.data_file):
+        print(json.dumps({"error": f"Data file not found: {args.data_file}"}))
+        sys.exit(1)
+    if args.days is None or args.days <= 0:
+        # Validate and correct invalid 'days' input
+        print(json.dumps({"error": "Invalid 'days' value provided; defaulting to 7"}))
+        args.days = 7
+
     monitor = PipelineMonitor()
-    monitor.load_executions(args.data_file)
+    try:
+        monitor.load_executions(args.data_file)
+    except Exception as e:
+        # Error handling for unexpected exceptions during load
+        print(json.dumps({"error": f"Exception while loading data: {str(e)}"}))
+        sys.exit(1)
 
     kwargs = {}
     if args.pipeline_id:
@@ -40,7 +57,11 @@ def main():
     if args.days:
         kwargs['days'] = args.days
 
-    result = monitor.query(args.query, **kwargs)
+    try:
+        result = monitor.query(args.query, **kwargs)
+    except Exception as e:
+        print(json.dumps({"error": f"Exception while executing query: {str(e)}"}))
+        sys.exit(1)
 
     if isinstance(result, (dict, list)):
         print(json.dumps(result, indent=2, default=str))

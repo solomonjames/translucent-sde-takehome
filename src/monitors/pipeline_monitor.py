@@ -122,29 +122,42 @@ class PipelineMonitor:
         return dict(team_metrics)
 
     def get_performance_trends(self, pipeline_id: str, days: int = 7) -> Dict[str, Any]:
-        """Get performance trends for a pipeline over the last N days."""
-        cutoff_date = datetime.now() - timedelta(days=days)
-        # Make cutoff_date timezone-aware to match execution times
-        cutoff_date = cutoff_date.replace(tzinfo=self.executions[0].start_time.tzinfo) if self.executions else cutoff_date
+        """Get performance trends for a pipeline over the last N days.
 
+        Notes:
+        - The dataset may contain historical timestamps. Using the system's current
+          time (datetime.now) could yield empty windows. To make the analysis
+          deterministic and data-driven, we anchor the window to the latest
+          execution timestamp for the specified pipeline.
+        """
+        # Filter executions for the target pipeline
+        pipeline_execs = [e for e in self.executions if e.pipeline_id == pipeline_id]
+        if not pipeline_execs:
+            return {'error': f'No executions found for pipeline {pipeline_id}'}
+
+        # Anchor the time window to the latest execution time for the pipeline
+        latest_time = max(e.start_time for e in pipeline_execs)
+        cutoff_date = latest_time - timedelta(days=days)
+
+        # Select executions within the anchored window
         recent_executions = [
-            exec for exec in self.executions
-            if exec.pipeline_id == pipeline_id and exec.start_time >= cutoff_date
+            e for e in pipeline_execs
+            if cutoff_date <= e.start_time <= latest_time
         ]
 
         if not recent_executions:
             return {'error': f'No executions found for {pipeline_id} in the last {days} days'}
 
-        durations = [exec.duration for exec in recent_executions if exec.duration > 0]
-        success_count = sum(1 for exec in recent_executions if exec.status == PipelineStatus.SUCCESS)
+        durations = [e.duration for e in recent_executions if e.duration and e.duration > 0]
+        success_count = sum(1 for e in recent_executions if e.status == PipelineStatus.SUCCESS)
 
         return {
             'pipeline_id': pipeline_id,
             'total_executions': len(recent_executions),
-            'success_rate': (success_count / len(recent_executions)) * 100,
-            'avg_duration': statistics.mean(durations) if durations else 0,
-            'min_duration': min(durations) if durations else 0,
-            'max_duration': max(durations) if durations else 0,
+            'success_rate': (success_count / len(recent_executions)) * 100 if recent_executions else 0.0,
+            'avg_duration': statistics.mean(durations) if durations else 0.0,
+            'min_duration': min(durations) if durations else 0.0,
+            'max_duration': max(durations) if durations else 0.0,
             'days_analyzed': days
         }
 
