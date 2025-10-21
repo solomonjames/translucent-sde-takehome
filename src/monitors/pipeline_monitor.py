@@ -97,6 +97,30 @@ class PipelineMonitor:
         """Detect anomalies in pipeline executions using statistical thresholds."""
         return self.anomaly_detector.detect_all_anomalies(self.pipeline_metrics)
 
+    def get_intelligent_alerts(self) -> Dict[str, Dict[str, List[dict]]]:
+        """Generate intelligently routed and de-duplicated alerts.
+
+        Returns a nested mapping: team -> severity -> list of alert dicts.
+        De-duplicates identical alerts per pipeline within this generation run.
+        """
+        raw_alerts = self.detect_anomalies()
+
+        routed: Dict[str, Dict[str, List[dict]]] = defaultdict(lambda: defaultdict(list))
+        seen_keys = set()
+        for alert in raw_alerts:
+            # Dedup key based on pipeline + message category (first sentence/phrase)
+            key = (alert.pipeline_id, alert.message)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+
+            team = alert.team or 'unknown'
+            severity = alert.severity.value
+            routed[team][severity].append(alert.to_dict())
+
+        # Convert nested defaultdict to regular dicts
+        return {team: dict(sev_map) for team, sev_map in routed.items()}
+
     def get_team_metrics(self) -> Dict[str, Dict[str, Any]]:
         """Get metrics aggregated by team."""
         team_metrics: Dict[str, Dict[str, Any]] = defaultdict(lambda: {
@@ -173,5 +197,7 @@ class PipelineMonitor:
             return self.get_performance_trends(kwargs.get('pipeline_id', ''), kwargs.get('days', 7))
         elif query_type == "total_executions":
             return len(self.executions)
+        elif query_type == "routed_alerts":
+            return self.get_intelligent_alerts()
         else:
             return f"Unknown query: {query_type}"

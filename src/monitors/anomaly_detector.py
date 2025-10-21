@@ -133,11 +133,12 @@ class AnomalyDetector:
             )
 
         def severity_func(deviation: float) -> AlertSeverity:
-            return (
-                AlertSeverity.HIGH
-                if deviation > self.SR_SEVERITY_HIGH_DELTA
-                else AlertSeverity.MEDIUM
-            )
+            if deviation > (2 * self.SR_SEVERITY_HIGH_DELTA):
+                return AlertSeverity.CRITICAL
+            elif deviation > self.SR_SEVERITY_HIGH_DELTA:
+                return AlertSeverity.HIGH
+            else:
+                return AlertSeverity.MEDIUM
 
         return self._detect_anomalies(
             pipeline_metrics,
@@ -165,11 +166,12 @@ class AnomalyDetector:
             return f"Anomalous high duration: {value:.1f}s (threshold: {threshold:.1f}s)"
 
         def severity_func(deviation: float) -> AlertSeverity:
-            return (
-                AlertSeverity.HIGH
-                if deviation > self.DURATION_SEVERITY_HIGH_DELTA
-                else AlertSeverity.MEDIUM
-            )
+            if deviation > (2 * self.DURATION_SEVERITY_HIGH_DELTA):
+                return AlertSeverity.CRITICAL
+            elif deviation > self.DURATION_SEVERITY_HIGH_DELTA:
+                return AlertSeverity.HIGH
+            else:
+                return AlertSeverity.MEDIUM
 
         values = self._collect_metric_values(pipeline_metrics, 'avg_duration', condition)
         return self._detect_anomalies(
@@ -198,11 +200,12 @@ class AnomalyDetector:
             return f"Anomalous low records processed: {value:.1f} (threshold: {threshold:.1f})"
 
         def severity_func(deviation: float) -> AlertSeverity:
-            return (
-                AlertSeverity.HIGH
-                if deviation > self.RECORDS_SEVERITY_HIGH_DELTA
-                else AlertSeverity.MEDIUM
-            )
+            if deviation > (2 * self.RECORDS_SEVERITY_HIGH_DELTA):
+                return AlertSeverity.CRITICAL
+            elif deviation > self.RECORDS_SEVERITY_HIGH_DELTA:
+                return AlertSeverity.HIGH
+            else:
+                return AlertSeverity.MEDIUM
 
         values = self._collect_metric_values(pipeline_metrics, 'avg_records_processed', condition)
         return self._detect_anomalies(
