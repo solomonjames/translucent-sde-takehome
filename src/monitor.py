@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
 
 from src.enums import PipelineStatus, AlertSeverity
-from src.models import Alert, PipelineExecution
+from models import Alert, PipelineExecution
 
 
 class PipelineMonitor:
