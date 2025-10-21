@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 import argparse
 import json
 
-from src.monitor import PipelineMonitor
+from src.monitors import PipelineMonitor
 
 
 def main():

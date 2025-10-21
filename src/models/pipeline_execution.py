@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from src.enums import PipelineStatus
+from ..enums import PipelineStatus
 
 class PipelineExecution:
     """Represents a single pipeline execution."""

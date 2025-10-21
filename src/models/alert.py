@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from src.enums import AlertSeverity
+from ..enums import AlertSeverity
 
 
 class Alert:
