@@ -8,6 +8,7 @@ from typing import Dict, List, Any, Optional
 
 from ..enums import PipelineStatus, AlertSeverity
 from ..models import Alert, PipelineExecution
+from .anomaly_detector import AnomalyDetector
 
 
 class PipelineMonitor:
@@ -25,6 +26,7 @@ class PipelineMonitor:
             'team': None
         })
         self.alerts: List[Alert] = []
+        self.anomaly_detector = AnomalyDetector()
 
     def load_executions(self, data_file: str) -> None:
         """Load pipeline execution data from file."""
@@ -92,29 +94,8 @@ class PipelineMonitor:
             return health_summary
 
     def detect_anomalies(self) -> List[Alert]:
-        """Detect anomalies in pipeline executions.
-
-        This is a basic implementation - candidates should improve this significantly.
-        """
-        anomalies = []
-
-        for pipeline_id, metrics in self.pipeline_metrics.items():
-            # Simple anomaly: pipelines with <80% success rate
-            if metrics['total_executions'] >= 5:  # Only check pipelines with enough data
-                success_rate = (metrics['successful_executions'] / metrics['total_executions']) * 100
-
-                if success_rate < 80:
-                    severity = AlertSeverity.HIGH if success_rate < 50 else AlertSeverity.MEDIUM
-                    alert = Alert(
-                        pipeline_id=pipeline_id,
-                        severity=severity,
-                        message=f"Low success rate: {success_rate:.1f}%",
-                        team=metrics['team'] or 'unknown',
-                        timestamp=datetime.now()
-                    )
-                    anomalies.append(alert)
-
-        return anomalies
+        """Detect anomalies in pipeline executions using statistical thresholds."""
+        return self.anomaly_detector.detect_all_anomalies(self.pipeline_metrics)
 
     def get_team_metrics(self) -> Dict[str, Dict[str, Any]]:
         """Get metrics aggregated by team."""

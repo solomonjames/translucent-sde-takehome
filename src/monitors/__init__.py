@@ -1,3 +1,3 @@
-from pipeline_monitor import PipelineMonitor
+from .pipeline_monitor import PipelineMonitor
 
 __all__ = ['PipelineMonitor']
